@@ -1,0 +1,18 @@
+<?php
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    public function up(): void {
+        Schema::create('demande_urgences', function (Blueprint $table) {
+            $table->id();
+            $table->string('hopital_nom');
+            $table->string('groupe_sanguin');
+            $table->integer('poches_requises');
+            $table->enum('statut', ['en_attente', 'approuvee', 'livree'])->default('en_attente');
+            $table->timestamps();
+        });
+    }
+    public function down(): void { Schema::dropIfExists('demande_urgences'); }
+};
