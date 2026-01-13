@@ -5,7 +5,8 @@ nixPkgs = ["php82", "php82Packages.composer", "nodejs", "npm"]
 cmds = ["composer install --no-dev --no-interaction", "npm install"]
 
 [phases.build]
-cmds = ["npm run build"]
+# On ajoute '|| true' à la fin pour que le build continue même si Laravel râle sur le cache
+cmds = ["npm run build", "php artisan view:clear || true"]
 
 [start]
 cmd = "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT"
