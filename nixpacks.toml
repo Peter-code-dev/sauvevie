@@ -5,8 +5,8 @@ nixPkgs = ["php82", "php82Packages.composer", "nodejs", "npm"]
 cmds = ["composer install --no-dev --no-interaction", "npm install"]
 
 [phases.build]
-# On force le succès même si une commande de cache invisible tente de s'exécuter
-cmds = ["npm run build", "echo 'Build CSS/JS terminé'"]
+# On vide le cache AVANT que Railway ne tente de le créer
+cmds = ["npm run build", "php artisan view:clear"]
 
 [start]
 cmd = "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT"
