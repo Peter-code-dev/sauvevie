@@ -5,13 +5,8 @@ nixPkgs = ["php82", "php82Packages.composer", "nodejs", "npm"]
 cmds = ["composer install --no-dev --no-interaction", "npm install"]
 
 [phases.build]
-# On vide TOUS les caches possibles AVANT le build
-cmds = [
-    "php artisan view:clear",
-    "php artisan config:clear",
-    "php artisan cache:clear",
-    "npm run build"
-]
+# On vide explicitement les vues ici au cas où
+cmds = ["php artisan view:clear", "npm run build"]
 
 [start]
 cmd = "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT"
