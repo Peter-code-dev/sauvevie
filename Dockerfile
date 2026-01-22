@@ -1,9 +1,26 @@
 FROM php:8.2-apache
 
-# Extensions nécessaires à Laravel
-RUN docker-php-ext-install pdo pdo_mysql
+# Installer dépendances système
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    libzip-dev \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    curl \
+    && docker-php-ext-install \
+    pdo \
+    pdo_mysql \
+    mbstring \
+    zip \
+    exif \
+    pcntl \
+    bcmath \
+    opcache
 
-# Activer mod_rewrite
+# Activer Apache rewrite
 RUN a2enmod rewrite
 
 # Installer Composer
@@ -15,14 +32,20 @@ WORKDIR /var/www/html
 # Copier le projet
 COPY . .
 
-# Installer dépendances
-RUN composer install --no-dev --optimize-autoloader
-
 # Permissions Laravel
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Apache pointe vers /public
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-RUN sed -ri 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf
+# Installer dépendances PHP
+RUN composer install --no-dev --optimize-autoloader
 
+# Cache Laravel
+RUN php artisan key:generate --force || true
+RUN php artisan config:clear
+RUN php artisan route:clear
+RUN php artisan view:clear
+
+# Port
 EXPOSE 80
+
+# Lancer Apache
+CMD ["apache2-foreground"]
