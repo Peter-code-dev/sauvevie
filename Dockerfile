@@ -27,7 +27,12 @@ RUN php artisan key:generate --force || true \
     && php artisan config:clear \
     && php artisan route:clear \
     && php artisan view:clear
+    RUN sed -i 's|/var/www/html|/var/www/html/public|g' \
+    /etc/apache2/sites-available/000-default.conf
 
-EXPOSE 80
 
+EXPOSE ${PORT}
+# Railway dynamic port support
+RUN sed -i 's/80/${PORT}/g' /etc/apache2/ports.conf \
+    && sed -i 's/:80/:${PORT}/g' /etc/apache2/sites-available/000-default.conf
 CMD ["apache2-foreground"]
