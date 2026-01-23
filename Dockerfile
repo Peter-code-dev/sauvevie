@@ -1,49 +1,32 @@
 FROM php:8.2-apache
 
-# Dépendances système
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    git \
-    unzip \
-    libzip-dev \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
-    curl \
-    && docker-php-ext-install \
-    pdo \
-    pdo_mysql \
-    mbstring \
-    zip \
-    exif \
-    pcntl \
-    bcmath \
-    opcache
+    git unzip libzip-dev libpng-dev libonig-dev libxml2-dev zip curl \
+    && docker-php-ext-install pdo pdo_mysql mbstring zip exif pcntl bcmath opcache
 
-# Apache rewrite
-RUN a2enmod rewrite
+# Disable other MPMs and enable prefork
+RUN a2dismod mpm_event mpm_worker || true \
+    && a2enmod mpm_prefork rewrite
 
-# Pointer Apache vers /public
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
-    /etc/apache2/sites-available/*.conf \
-    /etc/apache2/apache2.conf
-
-# Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
+# Set working directory
 WORKDIR /var/www/html
 
+# Copy project
 COPY . .
 
+# Permissions
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-RUN composer install --no-dev --optimize-autoloader
+# Install PHP dependencies
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer \
+    && composer install --no-dev --optimize-autoloader
 
-RUN php artisan key:generate --force || true
-RUN php artisan config:clear
-RUN php artisan route:clear
-RUN php artisan view:clear
+# Laravel optimizations
+RUN php artisan key:generate --force || true \
+    && php artisan config:clear \
+    && php artisan route:clear \
+    && php artisan view:clear
 
 EXPOSE 80
 
