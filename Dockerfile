@@ -1,6 +1,6 @@
 FROM php:8.2-apache
 
-# Installer dépendances système
+# Dépendances système
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -20,32 +20,31 @@ RUN apt-get update && apt-get install -y \
     bcmath \
     opcache
 
-# Activer Apache rewrite
+# Apache rewrite
 RUN a2enmod rewrite
 
-# Installer Composer
+# Pointer Apache vers /public
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+RUN sed -ri 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
+    /etc/apache2/sites-available/*.conf \
+    /etc/apache2/apache2.conf
+
+# Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Dossier de travail
 WORKDIR /var/www/html
 
-# Copier le projet
 COPY . .
 
-# Permissions Laravel
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Installer dépendances PHP
 RUN composer install --no-dev --optimize-autoloader
 
-# Cache Laravel
 RUN php artisan key:generate --force || true
 RUN php artisan config:clear
 RUN php artisan route:clear
 RUN php artisan view:clear
 
-# Port
 EXPOSE 80
 
-# Lancer Apache
 CMD ["apache2-foreground"]
